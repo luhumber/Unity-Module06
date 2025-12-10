@@ -1,8 +1,7 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
 
-public class ThirdPersonCamera : MonoBehaviour
-{
+public class ThirdPersonCamera : MonoBehaviour {
     [Header("Target")]
     [SerializeField] private Transform target;
     
@@ -23,14 +22,12 @@ public class ThirdPersonCamera : MonoBehaviour
     private float currentX = 0f;
     private float currentY = 20f;
 
-    void Start()
-    {
+    void Start() {
         Cursor.lockState = CursorLockMode.Locked;
         Cursor.visible = false;
     }
 
-    void LateUpdate()
-    {
+    void LateUpdate() {
         if (target == null) return;
         
         Vector2 mouseDelta = Mouse.current.delta.ReadValue();
@@ -48,8 +45,7 @@ public class ThirdPersonCamera : MonoBehaviour
         RaycastHit hit;
         float currentDistance = distance;
         
-        if (Physics.SphereCast(targetPos, collisionRadius, direction, out hit, distance, collisionLayers))
-        {
+        if (Physics.SphereCast(targetPos, collisionRadius, direction, out hit, distance, collisionLayers)) {
             currentDistance = hit.distance - collisionRadius;
             currentDistance = Mathf.Max(currentDistance, 0.5f);
         }
@@ -61,10 +57,8 @@ public class ThirdPersonCamera : MonoBehaviour
         transform.LookAt(targetPos);
     }
     
-    void OnApplicationFocus(bool hasFocus)
-    {
-        if (hasFocus)
-        {
+    void OnApplicationFocus(bool hasFocus) {
+        if (hasFocus) {
             Cursor.lockState = CursorLockMode.Locked;
             Cursor.visible = false;
         }
