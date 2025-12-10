@@ -3,7 +3,7 @@ using UnityEngine.InputSystem;
 
 public class PlayerController : MonoBehaviour
 {
-    [SerializeField] private float moveSpeed = 1f; // Multiplicateur de vitesse
+    [SerializeField] private float moveSpeed = 1f;
     
     private Animator animator;
     private Vector3 movement;
@@ -21,12 +21,19 @@ public class PlayerController : MonoBehaviour
             Keyboard.current.wKey.isPressed ? 1 : (Keyboard.current.sKey.isPressed ? -1 : 0)
         );
         
-        movement = new Vector3(moveInput.x, 0f, moveInput.y).normalized;
+        Vector3 cameraForward = Camera.main.transform.forward;
+        Vector3 cameraRight = Camera.main.transform.right;
+        
+        cameraForward.y = 0;
+        cameraRight.y = 0;
+        cameraForward.Normalize();
+        cameraRight.Normalize();
+        
+        movement = (cameraForward * moveInput.y + cameraRight * moveInput.x).normalized;
         
         bool isWalking = movement.magnitude > 0;
         animator.SetBool("isWalking", isWalking);
         
-        // Orienter le personnage dans la direction du mouvement
         if (movement.magnitude > 0)
         {
             Quaternion toRotation = Quaternion.LookRotation(movement, Vector3.up);
@@ -34,12 +41,10 @@ public class PlayerController : MonoBehaviour
         }
     }
     
-    // Cette fonction est appelée automatiquement par le Root Motion
     void OnAnimatorMove()
     {
-        // Appliquer le mouvement de l'animation multiplié par notre vitesse
         Vector3 velocity = animator.deltaPosition * moveSpeed / Time.deltaTime;
-        velocity.y = 0; // On ne veut pas monter
+        velocity.y = 0;
         
         transform.position += velocity * Time.deltaTime;
     }
