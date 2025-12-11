@@ -21,7 +21,7 @@ public class GhostEnemy : MonoBehaviour
     private NavMeshAgent agent;
     private Animator animator;
     private bool isChasing = false;
-    private bool isReturning = false; // NOUVEAU : pour empêcher la détection pendant le retour
+    private bool isReturning = false;
     private float chaseTimer;
     private int currentPointIndex = 0;
     private float waitTimer;
@@ -114,7 +114,7 @@ public class GhostEnemy : MonoBehaviour
     void StopChasing()
     {
         isChasing = false;
-        isReturning = true; // EMPÊCHER la détection pendant le retour
+        isReturning = true;
         
         // Retourner à la position de départ
         agent.SetDestination(startPosition);
@@ -123,7 +123,24 @@ public class GhostEnemy : MonoBehaviour
     void CatchPlayer()
     {
         Debug.Log("Player caught! Restarting stage...");
+
+        GameManager.TriggerGameOver();
+
+        Invoke("RestartScene", 3f);
+    }
+
+    void RestartScene() {
         SceneManager.LoadScene(SceneManager.GetActiveScene().name);
+    }
+
+    public void AlertToPlayer()
+    {
+        if (!isReturning)
+        {
+            isChasing = true;
+            chaseTimer = chaseTime * 5; // Plus de temps pour atteindre le joueur quand alerté
+            isWaiting = false;
+        }
     }
 
     void Patrol()
