@@ -3,13 +3,19 @@ using UnityEngine.InputSystem;
 
 public class PlayerController : MonoBehaviour {
     [SerializeField] private float moveSpeed = 1f;
+    [SerializeField] private AudioSource footstepSound;
     
     private Animator animator;
     private Vector3 movement;
     private Vector2 moveInput;
+    private bool isPlayingFootsteps = false;
 
     void Start() {
         animator = GetComponent<Animator>();
+        
+        if (footstepSound == null) {
+            footstepSound = GetComponent<AudioSource>();
+        }
     }
 
     void Update() {
@@ -30,6 +36,14 @@ public class PlayerController : MonoBehaviour {
         
         bool isWalking = movement.magnitude > 0;
         animator.SetBool("isWalking", isWalking);
+        
+        if (isWalking && !isPlayingFootsteps) {
+            footstepSound.Play();
+            isPlayingFootsteps = true;
+        } else if (!isWalking && isPlayingFootsteps) {
+            footstepSound.Stop();
+            isPlayingFootsteps = false;
+        }
         
         if (movement.magnitude > 0) {
             Quaternion toRotation = Quaternion.LookRotation(movement, Vector3.up);

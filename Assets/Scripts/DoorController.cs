@@ -1,7 +1,6 @@
 using UnityEngine;
 
-public class DoorController : MonoBehaviour
-{
+public class DoorController : MonoBehaviour {
     [SerializeField] private Transform doorPivot;
     [SerializeField] private float openAngle = 90f;
     [SerializeField] private float openSpeed = 2f;

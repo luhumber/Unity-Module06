@@ -2,8 +2,7 @@ using UnityEngine;
 using UnityEngine.AI;
 using UnityEngine.SceneManagement;
 
-public class GhostEnemy : MonoBehaviour
-{
+public class GhostEnemy : MonoBehaviour {
     [Header("Detection")]
     [SerializeField] private Transform player;
     [SerializeField] private float detectionRange = 10f;
@@ -27,105 +26,82 @@ public class GhostEnemy : MonoBehaviour
     private float waitTimer;
     private bool isWaiting = false;
     private Vector3 startPosition;
+    private bool hasCaughtPlayer = false;
 
-    void Start()
-    {
+    void Start() {
         agent = GetComponent<NavMeshAgent>();
         animator = GetComponent<Animator>();
         
-        if (player == null)
-        {
+        if (player == null) {
             player = GameObject.FindGameObjectWithTag("Player").transform;
         }
         
         startPosition = transform.position;
         
-        if (patrolPoints.Length > 0)
-        {
+        if (patrolPoints.Length > 0) {
             agent.SetDestination(patrolPoints[currentPointIndex].position);
         }
     }
 
-    void Update()
-    {
+    void Update() {
         float distanceToPlayer = Vector3.Distance(transform.position, player.position);
         bool canSeePlayer = CanSeeTarget(player.position);
         
-        // MODE RETOUR (ne pas détecter le joueur)
-        if (isReturning)
-        {
+        if (isReturning) {
             animator.SetBool("isWalking", true);
             
-            // Vérifier si on est revenu à la position de départ
-            if (!agent.pathPending && agent.remainingDistance <= agent.stoppingDistance)
-            {
+            if (!agent.pathPending && agent.remainingDistance <= agent.stoppingDistance) {
                 isReturning = false;
-                // Reprendre la patrouille au premier point
                 currentPointIndex = 0;
-                if (patrolPoints.Length > 0)
-                {
+                if (patrolPoints.Length > 0) {
                     agent.SetDestination(patrolPoints[currentPointIndex].position);
                 }
             }
             return;
         }
         
-        // MODE POURSUITE
-        if (isChasing)
-        {
+        if (isChasing) {
             chaseTimer -= Time.deltaTime;
             
-            // Vérifier si on attrape le joueur
-            if (distanceToPlayer <= catchDistance)
-            {
+            if (distanceToPlayer <= catchDistance) {
                 CatchPlayer();
                 return;
             }
             
-            // Poursuivre le joueur
             agent.SetDestination(player.position);
             animator.SetBool("isWalking", true);
             
-            // Arrêter la poursuite après le temps écoulé
-            if (chaseTimer <= 0)
-            {
+            if (chaseTimer <= 0) {
                 StopChasing();
             }
-        }
-        // Détecter le joueur
-        else if (canSeePlayer && distanceToPlayer <= detectionRange)
-        {
+        } else if (canSeePlayer && distanceToPlayer <= detectionRange) {
             StartChasing();
-        }
-        // MODE PATROUILLE
-        else
-        {
+        } else {
             Patrol();
         }
     }
 
-    void StartChasing()
-    {
+    void StartChasing() {
         isChasing = true;
         chaseTimer = chaseTime;
         isWaiting = false;
     }
 
-    void StopChasing()
-    {
+    void StopChasing() {
         isChasing = false;
         isReturning = true;
         
-        // Retourner à la position de départ
         agent.SetDestination(startPosition);
     }
 
-    void CatchPlayer()
-    {
-        Debug.Log("Player caught! Restarting stage...");
-
+    void CatchPlayer() {
+        if (hasCaughtPlayer) return;
+        hasCaughtPlayer = true;
+        
+        Debug.Log("Player caught!");
+        
         GameManager.TriggerGameOver();
-
+        
         Invoke("RestartScene", 3f);
     }
 
@@ -133,45 +109,35 @@ public class GhostEnemy : MonoBehaviour
         SceneManager.LoadScene(SceneManager.GetActiveScene().name);
     }
 
-    public void AlertToPlayer()
-    {
-        if (!isReturning)
-        {
+    public void AlertToPlayer() {
+        if (!isReturning) {
             isChasing = true;
-            chaseTimer = chaseTime * 5; // Plus de temps pour atteindre le joueur quand alerté
+            chaseTimer = chaseTime * 5;
             isWaiting = false;
         }
     }
 
-    void Patrol()
-    {
+    void Patrol() {
         if (patrolPoints.Length == 0) return;
         
-        if (isWaiting)
-        {
+        if (isWaiting) {
             waitTimer -= Time.deltaTime;
             animator.SetBool("isWalking", false);
             
-            if (waitTimer <= 0)
-            {
+            if (waitTimer <= 0) {
                 isWaiting = false;
                 currentPointIndex = (currentPointIndex + 1) % patrolPoints.Length;
                 agent.SetDestination(patrolPoints[currentPointIndex].position);
             }
-        }
-        else if (!agent.pathPending && agent.remainingDistance <= agent.stoppingDistance)
-        {
+        } else if (!agent.pathPending && agent.remainingDistance <= agent.stoppingDistance) {
             isWaiting = true;
             waitTimer = waitTimeAtPoint;
-        }
-        else
-        {
+        } else {
             animator.SetBool("isWalking", true);
         }
     }
 
-    bool CanSeeTarget(Vector3 targetPosition)
-    {
+    bool CanSeeTarget(Vector3 targetPosition) {
         Vector3 directionToTarget = (targetPosition - transform.position).normalized;
         float distanceToTarget = Vector3.Distance(transform.position, targetPosition);
         
@@ -183,16 +149,14 @@ public class GhostEnemy : MonoBehaviour
             return false;
         
         RaycastHit hit;
-        if (Physics.Raycast(transform.position + Vector3.up, directionToTarget, out hit, distanceToTarget, obstacleMask))
-        {
+        if (Physics.Raycast(transform.position + Vector3.up, directionToTarget, out hit, distanceToTarget, obstacleMask)) {
             return false;
         }
         
         return true;
     }
 
-    void OnDrawGizmosSelected()
-    {
+    void OnDrawGizmosSelected() {
         Gizmos.color = Color.red;
         Gizmos.DrawWireSphere(transform.position, detectionRange);
         
@@ -207,16 +171,12 @@ public class GhostEnemy : MonoBehaviour
         Gizmos.DrawLine(transform.position, transform.position + leftBoundary);
         Gizmos.DrawLine(transform.position, transform.position + rightBoundary);
         
-        if (patrolPoints != null && patrolPoints.Length > 1)
-        {
+        if (patrolPoints != null && patrolPoints.Length > 1) {
             Gizmos.color = Color.blue;
-            for (int i = 0; i < patrolPoints.Length; i++)
-            {
-                if (patrolPoints[i] != null)
-                {
+            for (int i = 0; i < patrolPoints.Length; i++) {
+                if (patrolPoints[i] != null) {
                     int nextIndex = (i + 1) % patrolPoints.Length;
-                    if (patrolPoints[nextIndex] != null)
-                    {
+                    if (patrolPoints[nextIndex] != null) {
                         Gizmos.DrawLine(patrolPoints[i].position, patrolPoints[nextIndex].position);
                     }
                 }
